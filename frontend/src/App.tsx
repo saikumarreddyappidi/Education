@@ -18,12 +18,6 @@ import PDFManager from './components/PDFManager';
 import StaffSearch from './pages/StaffSearch';
 import FileViewerPage from './pages/FileViewerPage';
 
-// Protected Route Component for Staff Only
-const StaffRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useSelector((state: RootState) => state.auth);
-  return user?.role === 'staff' ? <>{children}</> : <Navigate to="/dashboard" replace />;
-};
-
 const AppRoutes: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { user, token } = useSelector((state: RootState) => state.auth);
