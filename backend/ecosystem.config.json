@@ -1,0 +1,21 @@
+{
+  "apps": [
+    {
+      "name": "nannotes-backend",
+      "script": "src/server-robust.ts",
+      "interpreter": "node",
+      "interpreter_args": "-r ts-node/register",
+      "watch": true,
+      "ignore_watch": ["node_modules", "dist"],
+      "env": {
+        "PORT": "5004",
+        "NODE_ENV": "development",
+        "USE_MEMORY_DB": "true"
+      },
+      "node_args": ["--trace-warnings"],
+      "error_file": "logs/err.log",
+      "out_file": "logs/out.log",
+      "log_date_format": "YYYY-MM-DD HH:mm:ss"
+    }
+  ]
+}

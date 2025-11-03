@@ -1,0 +1,14 @@
+{
+  "method": "PUT",
+  "url": "/api/notes/69090c97600fa0ae99fe6169",
+  "body": {
+    "title": "1 (from 7777)",
+    "content": "<p><a href=\"http://127.0.0.1:3001/login\" rel=\"noopener noreferrer\" target=\"_blank\">NANNOTES - Educational Productivity PlatformNANNOTES - Educational Productivity PlatformNANNOTES - Educational Productivity PlatformNANNOTES - Educational Productivity PlatformNANNOTES - Educational Productivity PlatformNANNOTES - Educational Productivity PlatformNANNOTES - Educational Productivity PlatformNANNOTES - Educational Productivity PlatformNANNOTES - Educational Productivity Platform</a></p>",
+    "tags": [
+      "saved-from-staff"
+    ],
+    "isShared": false
+  },
+  "userId": "anonymous",
+  "timestamp": "2025-11-03T20:12:42.056Z"
+}

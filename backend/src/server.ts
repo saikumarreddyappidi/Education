@@ -17,21 +17,25 @@ process.on('uncaughtException', (error) => {
 
 dotenv.config();
 
-const PORT = process.env.PORT || 5003;
+const PORT = parseInt(process.env.PORT || '5003', 10);
 
 export const startServer = async () => {
   process.on('exit', (code) => {
     console.log(`[Process Exit] Code: ${code}`);
   });
 
-  process.on('SIGINT', () => {
-    console.log('Received SIGINT, shutting down');
-  });
+  // Only handle SIGINT in production
+  if (process.env.NODE_ENV === 'production') {
+    process.on('SIGINT', () => {
+      console.log('Received SIGINT, shutting down');
+      process.exit(0);
+    });
+  }
 
   try {
     await connectDB();
-    const server = app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
+    const server = app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Server is running on http://localhost:${PORT}`);
       console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
     });
 
