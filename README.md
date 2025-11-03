@@ -1,6 +1,21 @@
-# NANNOTES - Educational Productivity Platform
+# EduConnect - Comprehensive Educational Platform
 
-A comprehensive full-stack web application designed for educational productivity, featuring user authentication, note-taking, whiteboard drawing, PDF management, and teacher-student collaboration through unique teacher codes.
+A comprehensive full-stack web application designed for seamless teacher-student collaboration and educational excellence. EduConnect brings together note-taking, whiteboard tools, PDF management, real-time assignment submission, interactive discussion forums, and instant notifications—all in one unified platform.
+
+## 🎯 Problem Statement & Solution
+
+### The Challenge
+In online classes, students and teachers face communication gaps:
+- Students miss assignments or deadlines
+- Teachers struggle to manage submissions and provide timely feedback
+- There's no centralized place for sharing materials or discussions
+- Learning becomes unorganized and confusing
+
+### Our Solution
+EduConnect bridges these gaps by providing a single, intuitive platform where:
+- **Teachers** can post assignments, share materials, grade work, and answer questions in real-time
+- **Students** can view assignments, submit work, ask questions, and receive instant notifications
+- Everyone stays connected and organized
 
 ## 🚀 Features
 
@@ -39,6 +54,40 @@ A comprehensive full-stack web application designed for educational productivity
 - **Student Access**: Students with matching Teacher Codes see shared notes
 - **Role-based Features**: Different capabilities for Students vs Staff
 
+### 📚 Assignment System
+- **Assignment Creation**: Teachers can create assignments with titles, descriptions, and deadlines
+- **File Attachments**: Upload study materials, rubrics, and resources
+- **Student Submission**: Students submit assignments with file uploads
+- **Grading & Feedback**: Teachers can grade submissions and provide detailed feedback
+- **Submission Tracking**: View submission status (pending, submitted, graded)
+- **Deadline Alerts**: Automatic notifications when deadlines approach
+- **Grade Distribution**: Teachers can view analytics on assignment performance
+
+### 💬 Discussion Forum
+- **Topic Creation**: Teachers and students can start discussion threads
+- **Q&A Format**: Questions, answers, and peer-to-peer support
+- **Threaded Comments**: Reply to specific messages with full conversation context
+- **Search**: Find past discussions and answers instantly
+- **Moderation**: Teachers can pin important answers and manage discussions
+- **Reputation System**: Students gain recognition for helpful answers
+
+### 🔔 Real-Time Notifications
+- **Assignment Updates**: Notify students when new assignments are posted
+- **Submission Reminders**: Alerts for upcoming deadlines
+- **Feedback Notifications**: Instant alerts when grades are posted
+- **Discussion Replies**: Get notified of new replies in discussion threads
+- **Message Alerts**: Receive notifications for direct messages
+- **Notification Dashboard**: Centralized view of all notifications
+- **Email Integration**: Optional email notifications for critical updates
+
+### 📤 Enhanced File Management
+- **Multi-format Support**: Upload and share PDFs, documents, images, and videos
+- **File Organization**: Organize files by assignment, subject, or category
+- **File Previews**: Quick preview without downloading
+- **Version Control**: Maintain file versions and revision history
+- **Access Control**: Set permissions for who can view/download files
+- **Collaborative Annotations**: Comment and annotate shared files
+
 ## 🛠 Tech Stack
 
 ### Frontend
@@ -49,15 +98,21 @@ A comprehensive full-stack web application designed for educational productivity
 - **React Quill** for rich text editing
 - **React Canvas Draw** for whiteboard functionality
 - **PDF.js** for PDF viewing and annotation
+- **Socket.io-client** for real-time notifications
+- **React Toastify** for notification UI
+- **Axios** for API calls with interceptors
 
 ### Backend
 - **Node.js** with Express.js
 - **TypeScript** for type safety
 - **MongoDB** with Mongoose ODM
 - **JWT** for authentication
+- **Socket.io** for real-time notifications
 - **Multer** for file uploads
 - **AWS S3** for file storage
 - **bcryptjs** for password hashing
+- **Bull** for job queue (for background notifications)
+- **Nodemailer** for email notifications
 
 ### Database
 - **MongoDB** for primary data storage
@@ -106,6 +161,18 @@ AWS_SECRET_ACCESS_KEY=your-aws-secret-key
 AWS_REGION=us-east-1
 AWS_S3_BUCKET=nannotes-uploads
 CORS_ORIGINS=http://localhost:3000
+
+# Real-time Notifications (Socket.io)
+SOCKET_IO_ENABLED=true
+
+# Email Notifications (Optional)
+SMTP_SERVICE=gmail
+SMTP_EMAIL=your-email@gmail.com
+SMTP_PASSWORD=your-app-password
+SMTP_FROM_NAME=EduConnect
+
+# Job Queue (Bull)
+REDIS_URL=redis://localhost:6379
 ```
 
 ## 🚀 Getting Started
@@ -153,11 +220,15 @@ npm start
 
 ### For Students
 1. **Register** with registration number, password, year, semester, course
-2. **Optional**: Enter Teacher Code to access shared notes
-3. **Create Notes**: Write and organize personal notes with tags
-4. **Use Whiteboard**: Create drawings and sketches
-5. **Manage PDFs**: Upload, view, and annotate PDF documents
-6. **View Shared Notes**: Access notes shared by teachers
+2. **Optional**: Enter Teacher Code to access shared notes and assignments
+3. **Dashboard**: View assignments, due dates, and submit work
+4. **Create Notes**: Write and organize personal notes with tags
+5. **Use Whiteboard**: Create drawings and sketches for brainstorming
+6. **Manage PDFs**: Upload, view, and annotate PDF documents
+7. **Submit Assignments**: Upload files and submit work before deadlines
+8. **View Grades**: Check feedback and grades from teachers
+9. **Participate in Discussions**: Ask questions and help peers
+10. **Stay Informed**: Receive instant notifications for new assignments and feedback
 
 ### For Staff
 1. **Register** with registration number, password, subject, year/semester
@@ -165,6 +236,12 @@ npm start
 3. **Create and Share Notes**: Write notes and mark them as shared
 4. **Manage Content**: Full access to personal notes and drawings
 5. **Share Teacher Code**: Provide code to students for note access
+6. **Create Assignments**: Post assignments with deadlines and attachments
+7. **Manage Submissions**: Track student submissions and completion
+8. **Grade & Feedback**: Evaluate work and provide detailed feedback
+9. **Start Discussions**: Create discussion forums for Q&A
+10. **Send Notifications**: Alert students about important updates
+11. **Track Progress**: View analytics on assignment performance
 
 ## 🔧 API Endpoints
 
@@ -172,6 +249,7 @@ npm start
 - `POST /api/auth/register` - User registration
 - `POST /api/auth/login` - User login
 - `GET /api/auth/me` - Get current user
+- `POST /api/auth/logout` - User logout
 
 ### Notes
 - `GET /api/notes` - Get user's notes + shared notes
@@ -180,12 +258,133 @@ npm start
 - `DELETE /api/notes/:id` - Delete note
 - `GET /api/notes/search` - Search notes
 
+### Assignments
+- `GET /api/assignments` - Get assignments (filters by role)
+- `POST /api/assignments` - Create new assignment (teachers only)
+- `PUT /api/assignments/:id` - Update assignment (teachers only)
+- `DELETE /api/assignments/:id` - Delete assignment (teachers only)
+- `GET /api/assignments/:id` - Get assignment details with submissions
+- `GET /api/assignments/:id/submissions` - Get all submissions for assignment
+
+### Submissions
+- `GET /api/submissions` - Get user's submissions
+- `POST /api/assignments/:id/submit` - Submit assignment
+- `PUT /api/submissions/:id` - Resubmit assignment
+- `GET /api/submissions/:id` - Get submission details
+- `POST /api/submissions/:id/grade` - Grade submission (teachers only)
+- `POST /api/submissions/:id/feedback` - Add feedback (teachers only)
+
+### Discussions
+- `GET /api/discussions` - Get all discussion threads
+- `POST /api/discussions` - Create new discussion thread
+- `GET /api/discussions/:id` - Get thread with all replies
+- `POST /api/discussions/:id/reply` - Reply to discussion thread
+- `PUT /api/discussions/:id/reply/:replyId` - Edit reply
+- `DELETE /api/discussions/:id/reply/:replyId` - Delete reply
+- `POST /api/discussions/:id/pin` - Pin discussion (teachers only)
+- `GET /api/discussions/search` - Search discussions
+
+### Notifications
+- `GET /api/notifications` - Get user's notifications
+- `POST /api/notifications/:id/read` - Mark notification as read
+- `POST /api/notifications/read-all` - Mark all as read
+- `DELETE /api/notifications/:id` - Delete notification
+- `PUT /api/users/:id/notification-settings` - Update notification preferences
+
 ### Files
 - `POST /api/files/upload` - Upload file to S3
 - `GET /api/files/signed-url/:fileName` - Get signed URL
 - `DELETE /api/files/:fileName` - Delete file
+- `GET /api/files/:id/versions` - Get file version history
 
-## 🗂 Project Structure
+## 📋 Role-Based Access
+
+### Student Permissions
+
+- Create, read, update, delete personal notes
+- Create, save, and delete whiteboard drawings
+- Upload, view, and annotate PDF documents
+- Enter teacher codes to access shared notes
+- View notes shared by teachers
+- View assigned assignments and due dates
+- Submit assignments with file attachments
+- View grades and feedback on submissions
+- Participate in discussion forums
+- Ask questions and answer peers
+- Receive notifications for new assignments and feedback
+- Download study materials and resources
+
+### Staff Permissions
+
+- All student permissions
+- Receive automatically generated unique teacher codes
+- Mark notes as shareable with teacher code
+- View student engagement with shared notes
+- Manage shared content visibility
+- Create and publish assignments
+- Set assignment deadlines and rubrics
+- Grade student submissions with feedback
+- View comprehensive assignment analytics
+- Create and moderate discussion forums
+- Pin important answers
+- Send notifications to students
+- Manage course materials and resources
+- Track student progress and performance
+
+## 💾 Database Models
+
+### User Model
+- Registration information (number, password)
+- Role designation (student/staff)
+- Academic details (year, semester, course, subject)
+- Teacher codes (auto-generated for staff)
+- Authentication tokens and sessions
+- Notification preferences
+
+### Note Model
+- Title and rich text content
+- Tags for organization
+- Author information
+- Creation and modification timestamps
+- Sharing status and teacher code reference
+- Access control metadata
+
+### Assignment Model
+- Title, description, and instructions
+- Teacher/creator reference
+- Due date and deadline
+- Attached files and resources
+- Grading rubric
+- Class or section reference
+- Status (draft, published, closed)
+
+### Submission Model
+- Assignment reference
+- Student reference
+- Submitted files and content
+- Submission timestamp
+- Grade and feedback
+- Revision history
+- Late submission flag
+
+### Discussion Model
+- Thread title and original post
+- Creator and contributors
+- Tags and category
+- Replies and nested comments
+- Pin status and views count
+- Timestamps and editing history
+- Attachment support
+
+### Notification Model
+- User reference
+- Notification type (assignment, submission, reply, feedback)
+- Associated entity reference
+- Read/unread status
+- Timestamp
+- Action URL
+
+## �🗂 Project Structure
 
 ```
 nannotes/
@@ -257,12 +456,56 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👥 Team
 
-- **NANNOTES Development Team**
+- **EduConnect Development Team** (formerly NANNOTES)
+
+## 🎓 Quick Feature Guide
+
+### For Teachers Getting Started
+1. Create an assignment in your dashboard
+2. Set a deadline and add rubric points
+3. Upload study materials or example files
+4. Share your Teacher Code with students
+5. Monitor submissions in real-time
+6. Grade work and add feedback
+7. Post discussion questions for the class
+
+### For Students Getting Started
+1. Enter your teacher's code to join the class
+2. Check your assignment dashboard daily
+3. Download materials and read requirements
+4. Submit work before the deadline
+5. Check your grades and feedback
+6. Participate in class discussions
+7. Ask questions anytime
 
 ## 🆘 Support
 
-For support, email team@nannotes.com or create an issue in the repository.
+For support, email team@educonnect.com or create an issue in the repository.
+
+## 🗺️ Roadmap
+
+### Phase 1 (Current)
+- ✅ Core assignment management
+- ✅ Real-time notifications
+- ✅ Discussion forums
+- ✅ File management
+
+### Phase 2 (Planned)
+- Live class integration
+- Video recording and playback
+- Peer review system
+- Attendance tracking
+- Advanced analytics and reporting
+
+### Phase 3 (Future)
+- Mobile applications (iOS/Android)
+- AI-powered plagiarism detection
+- Adaptive learning recommendations
+- Integration with external platforms (Google Classroom, Canvas)
+- Multilingual support
 
 ---
 
-**NANNOTES** - Empowering Education Through Technology 🚀
+**EduConnect** - Bridging the Gap Between Teachers and Students 🚀
+
+Transforming Education Through Technology and Collaboration �✨
