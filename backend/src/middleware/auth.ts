@@ -67,12 +67,12 @@ export const auth = async (req: any, res: any, next: any) => {
       const jwtError = error as jwt.JsonWebTokenError;
       
       // Provide specific error message based on error type
-      if (jwtError.name === 'TokenExpiredError') {
+      if (error.name === 'TokenExpiredError') {
         return res.status(401).json({ 
           message: 'Token has expired. Please log in again.',
           code: 'AUTH_TOKEN_EXPIRED'
         });
-      } else if (jwtError instanceof jwt.JsonWebTokenError) {
+      } else if (error.name === 'JsonWebTokenError') {
         return res.status(401).json({ 
           message: 'Invalid token. Please log in again.',
           code: 'AUTH_INVALID_TOKEN'
@@ -81,7 +81,7 @@ export const auth = async (req: any, res: any, next: any) => {
       
       return res.status(401).json({ 
         message: 'Token is not valid', 
-        error: jwtError.message,
+        error: error.message,
         code: 'AUTH_TOKEN_INVALID'
       });
     }
