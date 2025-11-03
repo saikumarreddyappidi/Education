@@ -1,7 +1,6 @@
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
-import fs from 'fs';
-import path from 'path';
+
 import bcrypt from 'bcryptjs';
 
 // Default admin user to create

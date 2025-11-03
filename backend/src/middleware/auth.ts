@@ -39,7 +39,7 @@ export const auth = async (req: any, res: any, next: any) => {
       });
       
       // Validate that user exists in database if needed
-      if (mongoose.connection.readyState === 1) { // If connected to db
+      if (mongoose.connection.readyState === mongoose.ConnectionStates.connected) { // If connected to db
         try {
           const User = mongoose.model('User');
           const user = await User.findById(req.user.userId).select('-password');
@@ -58,8 +58,13 @@ export const auth = async (req: any, res: any, next: any) => {
       }
       
       next();
-    } catch (jwtError: any) {
-      console.error('JWT Verification failed:', jwtError);
+    } catch (error: unknown) {
+      if (!(error instanceof Error)) {
+        throw error;
+      }
+      console.error('JWT Verification failed:', error);
+      
+      const jwtError = error as jwt.JsonWebTokenError;
       
       // Provide specific error message based on error type
       if (jwtError.name === 'TokenExpiredError') {
@@ -67,7 +72,7 @@ export const auth = async (req: any, res: any, next: any) => {
           message: 'Token has expired. Please log in again.',
           code: 'AUTH_TOKEN_EXPIRED'
         });
-      } else if (jwtError.name === 'JsonWebTokenError') {
+      } else if (jwtError instanceof jwt.JsonWebTokenError) {
         return res.status(401).json({ 
           message: 'Invalid token. Please log in again.',
           code: 'AUTH_INVALID_TOKEN'

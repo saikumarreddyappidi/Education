@@ -4,7 +4,7 @@ import { Request, Response, NextFunction } from 'express';
 export const requireRole = (allowedRoles: string | string[]) => {
   const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
 
-  return (req: Request & any, res: Response, next: NextFunction) => {
+  return (req: Request & { user?: { role?: string } }, res: Response, next: NextFunction) => {
     try {
       const userRole = req.user && req.user.role;
 
