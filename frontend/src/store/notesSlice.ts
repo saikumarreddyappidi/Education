@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { NotesState } from '../types';
+import { NotesState } from '../types/index';
 import api from '../services/api';
 
 const initialState: NotesState = {
@@ -45,19 +45,75 @@ export const fetchNotes = createAsyncThunk(
 
 export const createNote = createAsyncThunk(
   'notes/createNote',
-  async (noteData: { title: string; content: string; tags: string[]; shared?: boolean }) => {
-    console.log('📝 Creating note with data:', noteData);
-    const response = await api.post('/notes', noteData);
-    console.log('✅ Note created, response:', response.data);
-    return response.data;
+  async (noteData: { title: string; content: string; tags: string[]; isShared?: boolean }, { rejectWithValue }) => {
+    try {
+      console.log('📝 Creating note with data:', noteData);
+      
+      // Log the auth token for debugging
+      const token = localStorage.getItem('token');
+      console.log('🔑 Using token:', token ? `${token.substring(0, 15)}...` : 'No token found');
+      
+      // Make the API request
+      const response = await api.post('/notes', noteData);
+      console.log('✅ Note created, response:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error creating note:', error);
+      
+      // Enhanced error logging
+      if (error.response) {
+        console.error('❌ Error response data:', error.response.data);
+        console.error('❌ Error response status:', error.response.status);
+      } else if (error.request) {
+        console.error('❌ No response received. Request details:', error.request);
+      } else {
+        console.error('❌ Error message:', error.message);
+      }
+      
+      // Return a more informative error message
+      return rejectWithValue(
+        error.response?.data?.message || 
+        error.message || 
+        'Failed to create note. Please check your connection and try again.'
+      );
+    }
   }
 );
 
 export const updateNote = createAsyncThunk(
   'notes/updateNote',
-  async ({ id, ...noteData }: { id: string; title: string; content: string; tags: string[]; shared?: boolean }) => {
-    const response = await api.put(`/notes/${id}`, noteData);
-    return response.data.note || response.data;
+  async ({ id, ...noteData }: { id: string; title: string; content: string; tags: string[]; isShared?: boolean }, { rejectWithValue }) => {
+    try {
+      console.log('📝 Updating note with ID:', id, 'and data:', noteData);
+      
+      // Log the auth token for debugging
+      const token = localStorage.getItem('token');
+      console.log('🔑 Using token:', token ? `${token.substring(0, 15)}...` : 'No token found');
+      
+      // Make the API request
+      const response = await api.put(`/notes/${id}`, noteData);
+      console.log('✅ Note updated, response:', response.data);
+      return response.data.note || response.data;
+    } catch (error: any) {
+      console.error('❌ Error updating note:', error);
+      
+      // Enhanced error logging
+      if (error.response) {
+        console.error('❌ Error response data:', error.response.data);
+        console.error('❌ Error response status:', error.response.status);
+      } else if (error.request) {
+        console.error('❌ No response received. Request details:', error.request);
+      } else {
+        console.error('❌ Error message:', error.message);
+      }
+      
+      // Return a more informative error message
+      return rejectWithValue(
+        error.response?.data?.message || 
+        error.message || 
+        'Failed to update note. Please check your connection and try again.'
+      );
+    }
   }
 );
 
@@ -95,19 +151,70 @@ export const saveSearchedNote = createAsyncThunk(
 
 export const deleteNote = createAsyncThunk(
   'notes/deleteNote',
-  async (id: string) => {
-    await api.delete(`/notes/${id}`);
-    return id;
+  async (id: string, { rejectWithValue }) => {
+    try {
+      console.log('🗑️ Deleting note with ID:', id);
+      
+      // Log the auth token for debugging
+      const token = localStorage.getItem('token');
+      console.log('🔑 Using token for delete:', token ? `${token.substring(0, 15)}...` : 'No token found');
+      
+      const response = await api.delete(`/notes/${id}`);
+      console.log('✅ Note deleted successfully, response:', response.data);
+      return id;
+    } catch (error: any) {
+      console.error('❌ Error deleting note:', error);
+      
+      // Enhanced error logging
+      if (error.response) {
+        console.error('❌ Error response data:', error.response.data);
+        console.error('❌ Error response status:', error.response.status);
+      } else if (error.request) {
+        console.error('❌ No response received. Request details:', error.request);
+      } else {
+        console.error('❌ Error message:', error.message);
+      }
+      
+      return rejectWithValue(
+        error.response?.data?.message || 
+        error.message || 
+        'Failed to delete note. Please check your connection and try again.'
+      );
+    }
   }
 );
 
 export const searchNotes = createAsyncThunk(
   'notes/searchNotes',
-  async ({ query, tags }: { query: string; tags: string[] }) => {
-    const response = await api.get('/notes/search', {
-      params: { q: query, tags: tags.join(',') }
-    });
-    return response.data;
+  async ({ query, tags }: { query: string; tags: string[] }, { rejectWithValue }) => {
+    try {
+      console.log('🔍 Searching notes with query:', query, 'and tags:', tags);
+      
+      const response = await api.get('/notes/search', {
+        params: { q: query, tags: tags.join(',') }
+      });
+      
+      console.log('✅ Search results:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error searching notes:', error);
+      
+      // Enhanced error logging
+      if (error.response) {
+        console.error('❌ Error response data:', error.response.data);
+        console.error('❌ Error response status:', error.response.status);
+      } else if (error.request) {
+        console.error('❌ No response received. Request details:', error.request);
+      } else {
+        console.error('❌ Error message:', error.message);
+      }
+      
+      return rejectWithValue(
+        error.response?.data?.message || 
+        error.message || 
+        'Failed to search notes. Please check your connection and try again.'
+      );
+    }
   }
 );
 
@@ -168,7 +275,7 @@ const notesSlice = createSlice({
       })
       .addCase(updateNote.fulfilled, (state, action) => {
         state.isLoading = false;
-        const index = state.notes.findIndex(note => note._id === action.payload._id);
+        const index = state.notes.findIndex((note: any) => note._id === action.payload._id);
         if (index !== -1) {
           state.notes[index] = action.payload;
         }
@@ -184,7 +291,7 @@ const notesSlice = createSlice({
       })
       .addCase(deleteNote.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.notes = state.notes.filter(note => note._id !== action.payload);
+        state.notes = state.notes.filter((note: any) => note._id !== action.payload);
       })
       .addCase(deleteNote.rejected, (state, action) => {
         state.isLoading = false;

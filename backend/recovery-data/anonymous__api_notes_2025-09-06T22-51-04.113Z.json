@@ -1,0 +1,14 @@
+{
+  "method": "POST",
+  "url": "/api/notes",
+  "body": {
+    "title": "sa",
+    "content": "<p><span style=\"background-color: rgb(254, 242, 242); color: rgb(220, 38, 38);\">Server error during registrationServer error during registration</span></p>",
+    "tags": [
+      "sa"
+    ],
+    "isShared": false
+  },
+  "userId": "anonymous",
+  "timestamp": "2025-09-06T22:51:04.113Z"
+}

@@ -1,0 +1,562 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
+import { fetchNotes, createNote, updateNote, deleteNote, searchNotes, searchStaffNotes, saveSearchedNote } from '../store/notesSlice';
+import { RootState, AppDispatch } from '../store';
+
+const Notepad: React.FC = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const { notes, searchResults, currentStaffInfo, isLoading, error } = useSelector((state: RootState) => state.notes);
+  const { user } = useSelector((state: RootState) => state.auth);
+
+  const [selectedNote, setSelectedNote] = useState<any>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
+  const [isShared, setIsShared] = useState(false);
+  const [searchInput, setSearchInput] = useState('');
+  const [isMobileListVisible, setIsMobileListVisible] = useState(true);
+  const [autoSaveTimer, setAutoSaveTimer] = useState<NodeJS.Timeout | null>(null);
+  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error' | null>(null);
+
+  // Load notes on component mount
+  useEffect(() => {
+    dispatch(fetchNotes());
+  }, [dispatch]);
+
+  const handleSaveNote = async (silent: boolean = false) => {
+    if (!title.trim() || !content.trim()) {
+      if (!silent) alert('Please enter both title and content');
+      setSaveStatus(null);
+      return;
+    }
+
+    try {
+      setSaveStatus('saving');
+      const noteData = {
+        title: title.trim(),
+        content,
+        tags,
+        shared: user?.role === 'staff' ? isShared : false,
+      };
+
+      if (selectedNote) {
+        await dispatch(updateNote({ id: selectedNote._id, ...noteData })).unwrap();
+        if (!silent) alert('Note updated successfully!');
+      } else {
+        await dispatch(createNote(noteData)).unwrap();
+        if (!silent) alert('Note created successfully!');
+      }
+      
+      // Only reset and close if not silent (auto-save)
+      if (!silent) {
+        // Reset form and close editor
+        setIsEditing(false);
+        setSelectedNote(null);
+        setTitle('');
+        setContent('');
+        setTags([]);
+        setIsShared(false);
+      }
+      
+      // Refresh notes list
+      await dispatch(fetchNotes()).unwrap();
+      setSaveStatus('saved');
+      
+      // Set back to null after showing saved status
+      setTimeout(() => {
+        if (saveStatus === 'saved') setSaveStatus(null);
+      }, 3000);
+      
+    } catch (error) {
+      console.error('Failed to save note:', error);
+      setSaveStatus('error');
+      if (!silent) alert('Failed to save note. Please try again.');
+    }
+  };
+
+  // Set up auto-save timer
+  useEffect(() => {
+    if (isEditing && (title.trim() !== '' || content.trim() !== '')) {
+      if (autoSaveTimer) clearTimeout(autoSaveTimer);
+      const timer = setTimeout(() => {
+        handleSaveNote(true);
+      }, 30000); // Auto-save every 30 seconds
+      setAutoSaveTimer(timer);
+    }
+    return () => {
+      if (autoSaveTimer) clearTimeout(autoSaveTimer);
+    };
+  }, [isEditing, title, content, autoSaveTimer]);
+
+  const handleCreateNote = () => {
+    setSelectedNote(null);
+    setIsEditing(true);
+    setTitle('');
+    setContent('');
+    setTags([]);
+    setIsShared(false);
+    // On mobile, hide the list and show the editor
+    if (window.innerWidth < 768) {
+      setIsMobileListVisible(false);
+    }
+  };
+
+  const handleEditNote = (note: any) => {
+    setSelectedNote(note);
+    setIsEditing(true);
+    setTitle(note.title);
+    setContent(note.content);
+    setTags(note.tags || []);
+    setIsShared(note.shared || false);
+    // On mobile, hide the list and show the editor
+    if (window.innerWidth < 768) {
+      setIsMobileListVisible(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    // Ask for confirmation if there are changes
+    if (title || content) {
+      if (!window.confirm('Discard unsaved changes?')) {
+        return;
+      }
+    }
+    
+    setIsEditing(false);
+    setSelectedNote(null);
+    setTitle('');
+    setContent('');
+    setTags([]);
+    setIsShared(false);
+    
+    // On mobile, show the list again
+    if (window.innerWidth < 768) {
+      setIsMobileListVisible(true);
+    }
+  };
+
+  const handleDeleteNote = async (noteId: string) => {
+    if (window.confirm('Are you sure you want to delete this note?')) {
+      try {
+        await dispatch(deleteNote(noteId)).unwrap();
+        alert('Note deleted successfully!');
+        
+        // If the deleted note was selected, reset form
+        if (selectedNote && selectedNote._id === noteId) {
+          setSelectedNote(null);
+          setIsEditing(false);
+          setTitle('');
+          setContent('');
+          setTags([]);
+          setIsShared(false);
+        }
+        
+        // Refresh notes list
+        await dispatch(fetchNotes()).unwrap();
+      } catch (error) {
+        console.error('Failed to delete note:', error);
+        alert('Failed to delete note. Please try again.');
+      }
+    }
+  };
+
+  const handleAddTag = () => {
+    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
+      setTags([...tags, tagInput.trim()]);
+      setTagInput('');
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    setTags(tags.filter(tag => tag !== tagToRemove));
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddTag();
+    }
+  };
+
+  const handleSaveStaffNote = async (noteId: string) => {
+    try {
+      await dispatch(saveSearchedNote(noteId)).unwrap();
+      alert('Note saved to your account successfully!');
+      // Refresh notes list to include the newly saved note
+      await dispatch(fetchNotes()).unwrap();
+    } catch (error) {
+      console.error('Failed to save staff note:', error);
+      alert('Failed to save note. Please try again.');
+    }
+  };
+
+  const handleSearchNotes = async () => {
+    if (searchInput.trim()) {
+      // Check if the user is a student and might be searching for a staff ID
+      if (user?.role === 'student') {
+        try {
+          // First try to search for staff notes using the staff ID
+          await dispatch(searchStaffNotes(searchInput.trim()));
+        } catch (error) {
+          console.error('Error searching staff notes:', error);
+          // Fallback to general search if staff search fails
+          await dispatch(searchNotes(searchInput.trim()));
+        }
+      } else {
+        // For staff users, just use regular search
+        await dispatch(searchNotes(searchInput.trim()));
+      }
+    } else {
+      await dispatch(fetchNotes());
+    }
+  };
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearchNotes();
+    }
+  };
+
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
+  };
+
+  const handleBackToList = () => {
+    setIsMobileListVisible(true);
+  };
+
+  // Sort notes by most recent first
+  const sortedNotes = [...(notes || [])].sort((a, b) => {
+    return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+  });
+
+  // Determine if we have staff search results to display
+  const hasStaffSearchResults = searchResults && searchResults.length > 0;
+
+  // Filter for different tags
+  const availableTags = [...new Set(sortedNotes.flatMap(note => note.tags || []))];
+
+  return (
+    <div className={`h-full flex flex-col ${isFullscreen ? 'fixed inset-0 z-50 bg-white' : ''}`}>
+      <div className="flex items-center justify-between border-b p-4">
+        <h1 className="text-xl font-semibold">Notes</h1>
+        <div className="flex space-x-2">
+          {isFullscreen && (
+            <button
+              onClick={toggleFullscreen}
+              className="p-2 text-gray-600 hover:text-gray-900"
+            >
+              Exit Fullscreen
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+        {/* Note List - hidden on mobile when editing */}
+        <div className={`${isMobileListVisible ? 'block' : 'hidden'} md:block w-full md:w-1/3 border-r bg-gray-50 overflow-y-auto`}>
+          <div className="p-4 border-b sticky top-0 bg-gray-50 z-10">
+            <div className="flex mb-4">
+              <input
+                type="text"
+                placeholder="Search notes..."
+                className="flex-1 p-2 border rounded"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyDown={handleSearchKeyDown}
+              />
+              <button
+                onClick={handleSearchNotes}
+                className="ml-2 bg-blue-500 text-white px-4 py-2 rounded"
+              >
+                Search
+              </button>
+            </div>
+            <button
+              onClick={handleCreateNote}
+              className="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600 transition"
+            >
+              + New Note
+            </button>
+          </div>
+
+          <div className="divide-y">
+            {isLoading ? (
+              <div className="p-4 text-center">Loading notes...</div>
+            ) : hasStaffSearchResults ? (
+              // Display staff search results
+              <>
+                {currentStaffInfo && (
+                  <div className="p-4 bg-blue-50 border-b">
+                    <h3 className="font-medium text-blue-800">Teacher: {currentStaffInfo.name}</h3>
+                    <p className="text-sm text-blue-600">Subject: {currentStaffInfo.subject}</p>
+                    <p className="text-sm text-blue-600">Total shared notes: {currentStaffInfo.totalNotes}</p>
+                  </div>
+                )}
+                {searchResults.map((note) => (
+                  <div key={note._id} className="p-4 hover:bg-gray-100">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h3 className="font-medium text-gray-900 truncate">{note.title}</h3>
+                        <div className="text-sm text-gray-500">
+                          {new Date(note.updatedAt).toLocaleString()}
+                        </div>
+                        <div className="mt-1 text-sm text-gray-600 line-clamp-2">
+                          {note.content.replace(/<[^>]*>/g, '').substring(0, 100)}...
+                        </div>
+                        {note.tags && note.tags.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {note.tags.map((tag: string) => (
+                              <span
+                                key={tag}
+                                className="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        <div className="mt-2">
+                          <button
+                            onClick={() => handleSaveStaffNote(note._id)}
+                            className="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600"
+                          >
+                            Save to My Notes
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </>
+            ) : sortedNotes.length === 0 ? (
+              <div className="p-4 text-center text-gray-500">
+                No notes found. Create your first note!
+              </div>
+            ) : (
+              sortedNotes.map((note) => (
+                <div
+                  key={note._id}
+                  className={`p-4 cursor-pointer hover:bg-gray-100 ${
+                    selectedNote && selectedNote._id === note._id ? 'bg-blue-50' : ''
+                  }`}
+                >
+                  <div className="flex justify-between items-start">
+                    <div onClick={() => handleEditNote(note)} className="flex-1">
+                      <h3 className="font-medium text-gray-900 truncate">{note.title}</h3>
+                      <div className="text-sm text-gray-500">
+                        {new Date(note.updatedAt).toLocaleString()}
+                      </div>
+                      <div className="mt-1 text-sm text-gray-600 line-clamp-2">
+                        {note.content.replace(/<[^>]*>/g, '').substring(0, 100)}...
+                      </div>
+                      {note.tags && note.tags.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {note.tags.map((tag: string) => (
+                            <span
+                              key={tag}
+                              className="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {note.shared && (
+                        <div className="mt-1">
+                          <span className="px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded">
+                            Shared
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => handleDeleteNote(note._id)}
+                      className="ml-2 text-red-500 hover:text-red-700"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Note Editor - shown on mobile when editing */}
+        <div className={`${!isMobileListVisible ? 'block' : 'hidden'} md:block w-full md:w-2/3 flex flex-col overflow-hidden`}>
+          {isEditing ? (
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <div className="p-4 border-b">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-lg font-semibold">
+                    {selectedNote ? 'Edit Note' : 'New Note'}
+                  </h2>
+                  <div className="flex space-x-2">
+                    {/* Mobile back button */}
+                    <button
+                      onClick={handleBackToList}
+                      className="md:hidden p-2 text-gray-600 hover:text-gray-900"
+                    >
+                      Back to List
+                    </button>
+                    <button
+                      onClick={toggleFullscreen}
+                      className="p-2 text-gray-600 hover:text-gray-900"
+                    >
+                      {isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+                    </button>
+                  </div>
+                </div>
+                <input
+                  type="text"
+                  placeholder="Note Title"
+                  className="w-full mt-2 p-2 border rounded"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <div className="flex-1 flex">
+                    <input
+                      type="text"
+                      placeholder="Add tags..."
+                      className="flex-1 p-2 border rounded-l"
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                    />
+                    <button
+                      onClick={handleAddTag}
+                      className="bg-blue-500 text-white px-4 py-2 rounded-r"
+                    >
+                      Add
+                    </button>
+                  </div>
+                  {user?.role === 'staff' && (
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="shared"
+                        checked={isShared}
+                        onChange={(e) => setIsShared(e.target.checked)}
+                        className="mr-2"
+                      />
+                      <label htmlFor="shared">Share with students</label>
+                    </div>
+                  )}
+                </div>
+                {tags.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded flex items-center"
+                      >
+                        {tag}
+                        <button
+                          onClick={() => handleRemoveTag(tag)}
+                          className="ml-1 text-blue-800 hover:text-blue-900"
+                        >
+                          &times;
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <ReactQuill
+                  theme="snow"
+                  value={content}
+                  onChange={setContent}
+                  className="h-full"
+                  modules={{
+                    toolbar: [
+                      [{ header: [1, 2, 3, 4, 5, 6, false] }],
+                      ['bold', 'italic', 'underline', 'strike'],
+                      [{ list: 'ordered' }, { list: 'bullet' }],
+                      [{ indent: '-1' }, { indent: '+1' }],
+                      ['link', 'image'],
+                      [{ color: [] }, { background: [] }],
+                      ['clean'],
+                    ],
+                  }}
+                />
+              </div>
+              <div className="p-4 border-t flex justify-between items-center">
+                <div className="text-sm">
+                  {saveStatus === 'saving' && <span className="text-blue-500">Saving...</span>}
+                  {saveStatus === 'saved' && <span className="text-green-500">Saved!</span>}
+                  {saveStatus === 'error' && <span className="text-red-500">Error saving</span>}
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={handleCancelEdit}
+                    className="px-4 py-2 border rounded text-gray-700 hover:bg-gray-100"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => handleSaveNote(false)}
+                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  >
+                    Save
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex-1 flex items-center justify-center p-8 bg-gray-50">
+              <div className="text-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-12 w-12 text-gray-400 mx-auto"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                  />
+                </svg>
+                <h3 className="mt-4 text-lg font-medium text-gray-900">No note selected</h3>
+                <p className="mt-1 text-gray-500">
+                  Select a note from the list or create a new one to get started.
+                </p>
+                <button
+                  onClick={handleCreateNote}
+                  className="mt-4 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                >
+                  Create New Note
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Notepad;

@@ -1,0 +1,14 @@
+{
+  "method": "POST",
+  "url": "/api/notes",
+  "body": {
+    "title": "s1",
+    "content": "<p>Failed to save note. Please try again.Failed to save note. Please try again.Failed to save note. Please try again.<s>ss</s></p>",
+    "tags": [
+      "s1"
+    ],
+    "isShared": false
+  },
+  "userId": "anonymous",
+  "timestamp": "2025-09-06T22:19:33.634Z"
+}

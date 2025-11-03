@@ -1,0 +1,14 @@
+{
+  "method": "POST",
+  "url": "/api/auth/register",
+  "body": {
+    "registrationNumber": "STU001",
+    "password": "Student@123",
+    "role": "student",
+    "year": 1,
+    "semester": 1,
+    "course": "CS"
+  },
+  "userId": "anonymous",
+  "timestamp": "2025-11-03T05:29:03.755Z"
+}

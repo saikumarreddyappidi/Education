@@ -1,0 +1,14 @@
+{
+  "method": "POST",
+  "url": "/api/notes",
+  "body": {
+    "title": "maths",
+    "content": "<p>sai</p>",
+    "tags": [
+      "sai"
+    ],
+    "isShared": false
+  },
+  "userId": "anonymous",
+  "timestamp": "2025-11-03T04:38:02.421Z"
+}

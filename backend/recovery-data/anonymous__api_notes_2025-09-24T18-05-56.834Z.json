@@ -1,0 +1,14 @@
+{
+  "method": "POST",
+  "url": "/api/notes",
+  "body": {
+    "title": "s1",
+    "content": "<p>npm install</p><p>npm install</p><p>npm install</p><p><br></p>",
+    "tags": [
+      "s1"
+    ],
+    "isShared": false
+  },
+  "userId": "anonymous",
+  "timestamp": "2025-09-24T18:05:56.834Z"
+}

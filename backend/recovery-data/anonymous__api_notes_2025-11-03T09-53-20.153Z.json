@@ -1,0 +1,12 @@
+{
+  "method": "POST",
+  "url": "/api/notes",
+  "body": {
+    "title": "1",
+    "content": "<h2>NANNOTES</h2><p>Create New Account</p><p>I am a</p><p>Student</p><p>Staff</p><p>Student Registration Number</p><p>Password</p><p>Confirm Password</p><p>Year</p><p>Select Year</p><p>1st Year</p><p>2nd Year</p><p>3rd Year</p><p>4th Year</p><p>Semester</p><p>Select Semester</p><p>1st Semester</p><p>2nd Semester</p><p>Course</p><p><span style=\"color: rgb(220, 38, 38);\">Network error. Please check your connection and try again.</span></p><p>Register</p>",
+    "tags": [],
+    "isShared": false
+  },
+  "userId": "anonymous",
+  "timestamp": "2025-11-03T09:53:20.153Z"
+}

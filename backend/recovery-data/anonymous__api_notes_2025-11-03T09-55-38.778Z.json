@@ -1,0 +1,14 @@
+{
+  "method": "POST",
+  "url": "/api/notes",
+  "body": {
+    "title": "4",
+    "content": "<p>sai</p>",
+    "tags": [
+      "4"
+    ],
+    "isShared": true
+  },
+  "userId": "anonymous",
+  "timestamp": "2025-11-03T09:55:38.778Z"
+}

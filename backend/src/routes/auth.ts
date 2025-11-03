@@ -6,6 +6,67 @@ import { auth } from '../middleware/auth';
 
 const router = express.Router();
 
+const connectStudentToTeacher = async (
+  req: any,
+  res: any,
+  identifiers: { teacherCode?: string; staffId?: string }
+) => {
+  const { teacherCode, staffId } = identifiers;
+  const studentId = req.user.userId;
+
+  if (!teacherCode && !staffId) {
+    return res.status(400).json({ error: 'Teacher code or staff ID is required' });
+  }
+
+  // Find the teacher using teacherCode first, fallback to staff ID
+  let teacher = null;
+  if (teacherCode) {
+    teacher = await User.findOne({ teacherCode, role: 'staff' });
+  }
+  if (!teacher && staffId) {
+    teacher = await User.findOne({ registrationNumber: staffId, role: 'staff' });
+  }
+
+  if (!teacher) {
+    return res.status(404).json({ error: 'Teacher not found. Please check and try again.' });
+  }
+
+  const codeToStore = teacher.teacherCode;
+  if (!codeToStore) {
+    return res.status(400).json({ error: 'Selected teacher does not have a sharing code yet.' });
+  }
+
+  const student = await User.findById(studentId);
+
+  if (!student) {
+    return res.status(404).json({ error: 'Student not found' });
+  }
+
+  if (!Array.isArray(student.teacherCodes)) {
+    student.teacherCodes = [];
+  }
+
+  if (!student.teacherCodes.includes(codeToStore)) {
+    student.teacherCodes.push(codeToStore);
+  }
+
+  if (!student.teacherCode) {
+    student.teacherCode = codeToStore;
+  }
+
+  await student.save();
+
+  return res.json({
+    message: 'Successfully connected to teacher',
+    teacherName: teacher.registrationNumber,
+    teacherSubject: teacher.subject,
+    teacherCode: codeToStore,
+    connectedCodes: student.teacherCodes,
+    staffName: teacher.registrationNumber,
+    staffSubject: teacher.subject
+  });
+};
+
 // Register
 router.post('/register', [
   body('registrationNumber').notEmpty().withMessage('Registration number is required'),
@@ -22,7 +83,7 @@ router.post('/register', [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { registrationNumber, password, role, year, semester, course, teacherCode, subject } = req.body;
+  const { registrationNumber, password, role, year, semester, course, teacherCode, subject } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({ registrationNumber });
@@ -31,10 +92,50 @@ router.post('/register', [
     }
 
     // For staff, check if teacher code is already taken
-    if (role === 'staff' && teacherCode) {
-      const existingTeacher = await User.findOne({ teacherCode, role: 'staff' });
-      if (existingTeacher) {
-        return res.status(400).json({ message: 'Teacher code already exists. Please choose a different code.' });
+    if (role === 'staff') {
+      // Validate that subject is provided for staff
+      if (!subject) {
+        return res.status(400).json({ 
+          message: 'Subject is required for staff registration',
+          field: 'subject'
+        });
+      }
+      
+      // If teacher code is provided, check if it's already taken
+      if (teacherCode) {
+        const existingTeacher = await User.findOne({ teacherCode, role: 'staff' });
+        if (existingTeacher) {
+          return res.status(400).json({ 
+            message: 'Teacher code already exists. Please choose a different code.',
+            field: 'teacherCode'
+          });
+        }
+      } else {
+        // Auto-generate a unique teacher code if not provided
+        let isUnique = false;
+        let generatedCode = '';
+        let maxAttempts = 10; // Prevent infinite loops
+        let attempts = 0;
+        
+        while (!isUnique && attempts < maxAttempts) {
+          attempts++;
+          // Generate a random code with a staff prefix
+          generatedCode = `TC${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+          
+          // Check if it's unique
+          const existingCode = await User.findOne({ teacherCode: generatedCode });
+          if (!existingCode) {
+            isUnique = true;
+          }
+        }
+        
+        // Ensure we have a fallback if all attempts fail
+        if (!isUnique) {
+          generatedCode = `TC${Date.now()}${Math.floor(Math.random() * 1000)}`;
+        }
+        
+        console.log(`Auto-generated teacher code for staff: ${generatedCode}`);
+        req.body.teacherCode = generatedCode;
       }
     }
 
@@ -44,7 +145,8 @@ router.post('/register', [
       password,
       role,
       year,
-      semester
+      semester,
+      teacherCodes: []
     };
 
     if (role === 'student') {
@@ -56,12 +158,12 @@ router.post('/register', [
           return res.status(400).json({ message: 'Invalid teacher code' });
         }
         userData.teacherCode = teacherCode;
+        userData.teacherCodes = [teacherCode];
       }
     } else if (role === 'staff') {
       userData.subject = subject;
-      if (teacherCode) {
-        userData.teacherCode = teacherCode;
-      }
+      // Always set teacherCode for staff - either from the request or the auto-generated one
+      userData.teacherCode = req.body.teacherCode || teacherCode;
     }
 
     const user = new User(userData);
@@ -90,7 +192,47 @@ router.post('/register', [
     });
   } catch (error: any) {
     console.error('Registration error:', error);
-    res.status(500).json({ message: 'Server error during registration' });
+    
+    // Add more detailed error information for debugging
+    const errorDetails = {
+      message: error.message || 'Unknown error',
+      stack: error.stack || 'No stack trace available',
+      name: error.name || 'UnknownError',
+      code: error.code || 'NO_CODE'
+    };
+    
+    console.error('Registration error details:', JSON.stringify(errorDetails, null, 2));
+    
+    // Check for specific MongoDB errors
+    if (error.name === 'ValidationError') {
+      // Mongoose validation error
+      const validationErrors = Object.values(error.errors).map((err: any) => ({
+        field: err.path,
+        message: err.message
+      }));
+      
+      return res.status(400).json({
+        message: 'Validation failed',
+        errors: validationErrors
+      });
+    }
+    
+    if (error.code === 11000) {
+      // Duplicate key error
+      const field = Object.keys(error.keyValue)[0];
+      const value = error.keyValue[field];
+      
+      return res.status(400).json({
+        message: `The ${field} "${value}" is already taken. Please choose another one.`,
+        field: field
+      });
+    }
+    
+    // Return a more informative error message for all other errors
+    res.status(500).json({ 
+      message: 'Server error during registration',
+      details: process.env.NODE_ENV === 'development' ? errorDetails.message : 'Please try again or contact support.'
+    });
   }
 });
 
@@ -176,39 +318,21 @@ router.get('/me', auth, async (req: any, res: any) => {
 // Connect student to teacher
 router.post('/connect-teacher', auth, async (req: any, res: any) => {
   try {
-    const { teacherCode } = req.body;
-    const studentId = req.user.userId;
-
-    if (!teacherCode) {
-      return res.status(400).json({ error: 'Teacher code is required' });
-    }
-
-    // Find the teacher with this code
-    const teacher = await User.findOne({ teacherCode, role: 'staff' });
-    if (!teacher) {
-      return res.status(404).json({ error: 'Teacher code not found. Please check and try again.' });
-    }
-
-    // Update student with teacher code
-    const student = await User.findByIdAndUpdate(
-      studentId,
-      { teacherCode },
-      { new: true }
-    ).select('-password');
-
-    if (!student) {
-      return res.status(404).json({ error: 'Student not found' });
-    }
-
-    res.json({
-      message: 'Successfully connected to teacher',
-      teacherName: teacher.registrationNumber,
-      teacherSubject: teacher.subject,
-      teacherCode: teacher.teacherCode
-    });
+    const { teacherCode, staffId } = req.body;
+    return connectStudentToTeacher(req, res, { teacherCode, staffId });
   } catch (error: any) {
     console.error('Connect teacher error:', error);
     res.status(500).json({ error: 'Server error while connecting to teacher' });
+  }
+});
+
+router.post('/connect-staff', auth, async (req: any, res: any) => {
+  try {
+    const { staffId } = req.body;
+    return connectStudentToTeacher(req, res, { staffId });
+  } catch (error: any) {
+    console.error('Connect staff error:', error);
+    res.status(500).json({ error: 'Server error while connecting to staff' });
   }
 });
 

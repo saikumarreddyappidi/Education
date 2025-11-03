@@ -1,0 +1,10 @@
+{
+  "method": "POST",
+  "url": "/api/auth/login",
+  "body": {
+    "registrationNumber": "321123",
+    "password": "Sai@1234"
+  },
+  "userId": "anonymous",
+  "timestamp": "2025-09-06T21:59:58.635Z"
+}

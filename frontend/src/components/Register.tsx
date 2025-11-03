@@ -1,13 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import { register } from '../store/authSlice';
 import { RootState, AppDispatch } from '../store';
+import { checkApiConnection, getConnectionTroubleshootingSteps } from '../utils/api-utils';
+import { toast } from 'react-toastify';
 
 const Register: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const { isLoading, error } = useSelector((state: RootState) => state.auth);
+  const [apiConnected, setApiConnected] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    // Check API connectivity when component mounts
+    const checkConnection = async () => {
+      const isConnected = await checkApiConnection();
+      setApiConnected(isConnected);
+      
+      if (!isConnected) {
+        toast.error('Cannot connect to the server. Please check your connection.', {
+          position: 'top-center',
+          autoClose: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+        console.error('API connection check failed');
+        console.info(getConnectionTroubleshootingSteps());
+      } else {
+        console.log('API connection successful!');
+      }
+    };
+    
+    checkConnection();
+  }, []);
 
   const [formData, setFormData] = useState({
     registrationNumber: '',
@@ -21,6 +48,7 @@ const Register: React.FC = () => {
   });
 
   const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
+  const [registrationError, setRegistrationError] = useState<string | null>(null);
 
   const validatePassword = (password: string) => {
     const errors: string[] = [];
@@ -39,70 +67,99 @@ const Register: React.FC = () => {
     if (name === 'password') {
       setPasswordErrors(validatePassword(value));
     }
+    
+    // Clear any previous registration errors when form is changed
+    setRegistrationError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Clear any previous errors
+    setRegistrationError(null);
+    
+    // Check API connectivity before attempting registration
+    if (apiConnected === false) {
+      setRegistrationError('Cannot connect to the server. Please check your connection and try again.');
+      toast.error('Cannot connect to the server. Please check your connection.', {
+        position: 'top-center',
+      });
+      return;
+    }
+    
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match');
+      setRegistrationError('Passwords do not match');
       return;
     }
 
     if (passwordErrors.length > 0) {
-      alert('Please fix password requirements');
+      setRegistrationError('Please fix password requirements');
       return;
     }
 
     // Validate role-specific required fields
     if (formData.role === 'staff') {
       if (!formData.registrationNumber.trim()) {
-        alert('Staff ID is required for staff registration');
+        setRegistrationError('Staff ID is required for staff registration');
         return;
       }
       if (!formData.subject.trim()) {
-        alert('Subject is required for staff registration');
+        setRegistrationError('Subject is required for staff registration');
         return;
       }
       if (!formData.year.trim()) {
-        alert('Year is required for staff registration');
+        setRegistrationError('Year is required for staff registration');
         return;
       }
       if (!formData.semester.trim()) {
-        alert('Semester is required for staff registration');
+        setRegistrationError('Semester is required for staff registration');
         return;
       }
     }
 
     if (formData.role === 'student') {
       if (!formData.registrationNumber.trim()) {
-        alert('Registration number is required for student registration');
+        setRegistrationError('Registration number is required for student registration');
         return;
       }
       if (!formData.year.trim()) {
-        alert('Year is required for student registration');
+        setRegistrationError('Year is required for student registration');
         return;
       }
       if (!formData.semester.trim()) {
-        alert('Semester is required for student registration');
+        setRegistrationError('Semester is required for student registration');
         return;
       }
       if (!formData.course.trim()) {
-        alert('Course is required for student registration');
+        setRegistrationError('Course is required for student registration');
         return;
       }
     }
 
     try {
-      console.log('Attempting registration with data:', formData);
+      console.log('Attempting registration with data:', {
+        ...formData,
+        password: '[REDACTED]', // Don't log passwords
+      });
+      
+      // Check connection one more time before submitting
+      const isConnected = await checkApiConnection();
+      if (!isConnected) {
+        setRegistrationError('Cannot connect to the server. Please check your connection and try again.');
+        return;
+      }
+      
       const result = await dispatch(register(formData)).unwrap();
       console.log('Registration successful:', result);
+      toast.success('Registration successful! Redirecting to dashboard...');
       navigate('/dashboard');
     } catch (error: any) {
       console.error('Registration failed:', error);
       let errorMessage = 'Registration failed. Please try again.';
       
-      if (error?.response?.data?.message) {
+      if (error?.isNetworkError) {
+        errorMessage = 'Network error. Please check your connection and try again.';
+      } else if (error?.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error?.message) {
         errorMessage = error.message;
@@ -110,7 +167,8 @@ const Register: React.FC = () => {
         errorMessage = error.response.data.errors.map((e: any) => e.msg).join(', ');
       }
       
-      alert(errorMessage);
+      setRegistrationError(errorMessage);
+      toast.error(errorMessage);
     }
   };
 
@@ -138,6 +196,18 @@ const Register: React.FC = () => {
         <div className="absolute left-2 bottom-20 w-2 h-2 bg-white rounded-full border border-gray-300"></div>
         <div className="absolute left-2 bottom-12 w-2 h-2 bg-white rounded-full border border-gray-300"></div>
 
+        {/* Connection Status Indicator */}
+        {apiConnected !== null && (
+          <div className={`absolute top-2 right-2 flex items-center text-xs px-2 py-1 rounded-full ${
+            apiConnected 
+              ? 'bg-green-100 text-green-800 border border-green-300' 
+              : 'bg-red-100 text-red-800 border border-red-300'
+          }`}>
+            <div className={`w-2 h-2 rounded-full mr-1 ${apiConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+            {apiConnected ? 'Connected' : 'Disconnected'}
+          </div>
+        )}
+
         {/* Header Section */}
         <div className="text-center pt-6 pb-4 px-8">
           <h2 className="text-2xl font-bold text-gray-800 mb-2">
@@ -151,6 +221,23 @@ const Register: React.FC = () => {
         {/* Form Section */}
         <div className="px-8 pb-6">
           <div className="space-y-4">
+            {apiConnected === false && (
+              <div className="bg-red-50 border-l-4 border-red-400 p-3 rounded-r-lg mb-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm text-red-800">
+                      Cannot connect to the server. Please check if the backend is running and your connection is stable.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             <form className="space-y-4" onSubmit={handleSubmit}>
               <div>
                 <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-2">
@@ -351,17 +438,19 @@ const Register: React.FC = () => {
                 </>
               )}
 
-              {error && (
+              {(error || registrationError) && (
                 <div className="bg-red-50 border-l-4 border-red-400 p-3 rounded-r-lg">
-                  <span className="text-red-600 text-sm">{error}</span>
+                  <span className="text-red-600 text-sm">{registrationError || error}</span>
                 </div>
               )}
 
               <div className="pt-3">
                 <button
                   type="submit"
-                  disabled={isLoading}
-                  className="w-full py-2.5 px-4 text-white font-medium rounded-lg shadow-lg transition duration-200 hover:shadow-xl"
+                  disabled={isLoading || apiConnected === false}
+                  className={`w-full py-2.5 px-4 text-white font-medium rounded-lg shadow-lg transition duration-200 hover:shadow-xl ${
+                    (isLoading || apiConnected === false) ? 'opacity-70 cursor-not-allowed' : 'hover:bg-blue-600'
+                  }`}
                   style={{ 
                     backgroundColor: '#3b82f6',
                     fontSize: '15px'
@@ -375,6 +464,8 @@ const Register: React.FC = () => {
                       </svg>
                       Creating Account...
                     </div>
+                  ) : apiConnected === false ? (
+                    'Server Unavailable'
                   ) : (
                     'Register'
                   )}

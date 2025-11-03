@@ -1,11 +1,12 @@
 import express from 'express';
 import User from '../models/User';
 import { auth } from '../middleware/auth';
+import { requireRole } from '../middleware/requireRole';
 
 const router = express.Router();
 
 // Add teacher code for student (to access shared notes)
-router.post('/add-teacher', auth, async (req: any, res: any) => {
+router.post('/add-teacher', auth, requireRole('student'), async (req: any, res: any) => {
   try {
     const { teacherCode } = req.body;
     const userId = req.user.id;
@@ -51,7 +52,7 @@ router.post('/add-teacher', auth, async (req: any, res: any) => {
 });
 
 // Remove teacher code for student
-router.delete('/remove-teacher/:teacherCode', auth, async (req: any, res: any) => {
+router.delete('/remove-teacher/:teacherCode', auth, requireRole('student'), async (req: any, res: any) => {
   try {
     const { teacherCode } = req.params;
     const userId = req.user.id;
@@ -78,7 +79,7 @@ router.delete('/remove-teacher/:teacherCode', auth, async (req: any, res: any) =
 });
 
 // Get student's connected teachers
-router.get('/connected', auth, async (req: any, res: any) => {
+router.get('/connected', auth, requireRole('student'), async (req: any, res: any) => {
   try {
     const userId = req.user.id;
     const user = await User.findById(userId);
@@ -110,7 +111,7 @@ router.get('/connected', auth, async (req: any, res: any) => {
 });
 
 // Search for teachers by teacher code
-router.get('/search/:teacherCode', auth, async (req: any, res: any) => {
+router.get('/search/:teacherCode', auth, requireRole('student'), async (req: any, res: any) => {
   try {
     const { teacherCode } = req.params;
     const userId = req.user.id;

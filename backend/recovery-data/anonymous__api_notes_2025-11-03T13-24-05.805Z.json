@@ -1,0 +1,14 @@
+{
+  "method": "POST",
+  "url": "/api/notes",
+  "body": {
+    "title": "1",
+    "content": "<p>http://127.0.0.1:3001/loginhttp://127.0.0.1:3001/loginhttp://127.0.0.1:3001/login</p>",
+    "tags": [
+      "1"
+    ],
+    "isShared": true
+  },
+  "userId": "anonymous",
+  "timestamp": "2025-11-03T13:24:05.805Z"
+}

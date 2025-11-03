@@ -1,0 +1,14 @@
+{
+  "method": "POST",
+  "url": "/api/notes",
+  "body": {
+    "title": "Shared Note from Staff",
+    "content": "This is shared content",
+    "tags": [
+      "exam"
+    ],
+    "shared": true
+  },
+  "userId": "anonymous",
+  "timestamp": "2025-11-03T06:26:45.713Z"
+}

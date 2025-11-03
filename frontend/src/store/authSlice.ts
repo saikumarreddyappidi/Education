@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { AuthState } from '../types';
+import { AuthState } from '../types/index';
 import api from '../services/api';
 
 const initialState: AuthState = {
@@ -23,15 +23,38 @@ export const register = createAsyncThunk(
     subject?: string;
   }, { rejectWithValue }) => {
     try {
+      console.log('🚀 Attempting registration with data:', {
+        ...userData,
+        password: '[REDACTED]' // Don't log passwords
+      });
+      
       const response = await api.post('/auth/register', userData);
+      console.log('✅ Registration successful:', response.data);
+      
       localStorage.setItem('token', response.data.token);
       return response.data;
     } catch (error: any) {
-      console.error('Registration API error:', error);
+      console.error('❌ Registration API error:', error);
+      
+      // Handle network errors (when axios couldn't make the request)
+      if (!error.response) {
+        console.error('Network error during registration:', error.message);
+        return rejectWithValue({ 
+          message: 'Network error. Please check your connection and try again.',
+          isNetworkError: true
+        });
+      }
+      
+      // Handle server errors with response
       if (error.response?.data) {
+        console.error('Server returned error:', error.response.data);
         return rejectWithValue(error.response.data);
       }
-      return rejectWithValue({ message: 'Network error. Please check your connection.' });
+      
+      // Fallback for any other errors
+      return rejectWithValue({ 
+        message: error.message || 'Registration failed. Please try again.' 
+      });
     }
   }
 );

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+</head>
+<body>
+    <h1>API Connection Test</h1>
+    <button id="testAPI">Test API Connection</button>
+    <div id="result" style="margin-top: 20px; padding: 10px; border: 1px solid #ccc;"></div>
+
+    <script>
+        document.getElementById('testAPI').addEventListener('click', async () => {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing connection...';
+            
+            try {
+                // Try the primary URL first
+                const primaryUrl = 'http://127.0.0.1:5003/api/health';
+                resultDiv.innerHTML += `<p>Testing primary URL: ${primaryUrl}</p>`;
+                
+                const response = await fetch(primaryUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                resultDiv.innerHTML += `<p style="color: green">✅ Connection successful to primary URL!</p>`;
+                resultDiv.innerHTML += `<p>Response: ${JSON.stringify(data)}</p>`;
+            } catch (error) {
+                resultDiv.innerHTML += `<p style="color: red">❌ Error connecting to primary URL: ${error.message}</p>`;
+                
+                // Try the fallback URL
+                try {
+                    const fallbackUrl = 'http://localhost:5003/api/health';
+                    resultDiv.innerHTML += `<p>Testing fallback URL: ${fallbackUrl}</p>`;
+                    
+                    const fallbackResponse = await fetch(fallbackUrl, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const fallbackData = await fallbackResponse.json();
+                    resultDiv.innerHTML += `<p style="color: green">✅ Connection successful to fallback URL!</p>`;
+                    resultDiv.innerHTML += `<p>Response: ${JSON.stringify(fallbackData)}</p>`;
+                } catch (fallbackError) {
+                    resultDiv.innerHTML += `<p style="color: red">❌ Error connecting to fallback URL: ${fallbackError.message}</p>`;
+                    resultDiv.innerHTML += '<p>Possible issues:</p><ul>' + 
+                        '<li>Backend server is not running</li>' + 
+                        '<li>CORS policy is blocking the request</li>' + 
+                        '<li>Network/firewall issues</li>' + 
+                        '<li>Wrong port or URL</li>' + 
+                        '</ul>';
+                }
+            }
+        });
+    </script>
+</body>
+</html>

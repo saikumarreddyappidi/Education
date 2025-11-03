@@ -1,0 +1,12 @@
+{
+  "method": "POST",
+  "url": "/api/notes",
+  "body": {
+    "title": "nan",
+    "content": "<h3>&nbsp;Prompt: \"EduConnect\" System Requirements</h3><p>You are tasked with developing an academic collaboration platform, \"EduConnect.\" The system must meet the following functional requirements:</p><p><strong>1. 🔑 Authentication &amp; User Roles</strong></p><ul><li>Implement a secure, role-based login system.</li><li>Define two distinct user roles: <strong>Teacher</strong> and <strong>Student</strong>.</li><li>User dashboards and permissions must be dependent on the logged-in user's role.</li></ul><p><strong>2. 📚 Assignment Management</strong></p><ul><li><strong>Teachers:</strong> Must be able to create, post, and update assignments (including title, description, due date, and file attachments).</li><li><strong>Students:</strong> Must be able to view all posted assignments and submit their work (via file upload or text input).</li></ul><p><strong>3. 🎓 Grading &amp; Feedback System</strong></p><ul><li><strong>Teachers:</strong> Must have a module to view all student submissions for a specific assignment.</li><li><strong>Teachers:</strong> Must be able to assign a grade and provide personalized, real-time written feedback for each submission.</li><li><strong>Students:</strong> Must be able to view their grades and the feedback provided by the teacher.</li></ul><p><strong>4. 💬 Communication &amp; Discussion</strong></p><ul><li>Implement a central discussion forum or Q&amp;A board.</li><li><strong>Students:</strong> Must be able to post questions.</li><li><strong>Teachers (and other students):</strong> Must be able to reply to questions, creating threaded discussions.</li></ul><p><strong>5. 📁 File &amp; Resource Sharing</strong></p><ul><li>Provide a module for teachers to upload and share study materials (e.g., lecture notes, PDFs, links).</li><li>Students must be able to access and download these shared materials.</li></ul><p><strong>6. 🔔 Notification System</strong></p><ul><li>Implement an automated notification system to alert users of important events.</li><li><strong>Student alerts:</strong> New assignment posted, new grade received, reply to their discussion post, and upcoming deadlines.</li><li><strong>Teacher alerts:</strong> New assignment submission received, new question posted in the Q&amp;A forum.</li></ul><p><br></p>",
+    "tags": [],
+    "isShared": false
+  },
+  "userId": "anonymous",
+  "timestamp": "2025-11-03T05:14:31.918Z"
+}

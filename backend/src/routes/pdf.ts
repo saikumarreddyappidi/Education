@@ -5,8 +5,17 @@ import { auth } from '../middleware/auth';
 const router = express.Router();
 
 // In-memory storage for PDFs (replace with database in production)
-let pdfs: any[] = [];
+export let pdfs: any[] = [];
 let nextId = 1;
+
+// Helper to query PDFs for a teacher (by authorId or teacherCode)
+export const getPdfsForTeacher = (authorId?: string, teacherCode?: string) => {
+  return pdfs.filter(pdf => {
+    if (authorId && pdf.authorId === authorId) return true;
+    if (teacherCode && pdf.isShared && pdf.teacherCode === teacherCode) return true;
+    return false;
+  });
+};
 
 // Get all PDFs for the authenticated user
 router.get('/', auth, async (req: any, res: any) => {

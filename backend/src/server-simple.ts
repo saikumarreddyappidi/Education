@@ -17,25 +17,33 @@ const PORT = process.env.PORT || 5002;
 // Security middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? [
-        'https://nannotes-frontend.up.railway.app',
-        'https://your-custom-domain.com',
-        /^https:\/\/.*\.railway\.app$/,
-        /^https:\/\/.*\.vercel\.app$/
-      ]
-    : [
-        'http://localhost:3000', 
-        'http://localhost:3001', 
-        'http://localhost:3002', 
-        'http://localhost:3003',
-        'http://localhost:60464',
-        'http://localhost:60700',
-        'http://localhost:59334',
-        'http://localhost:3004',
-        'http://localhost:3005'
-      ],
-  credentials: true
+  origin: function(origin, callback) {
+    // Allow all origins in development mode
+    if (process.env.NODE_ENV !== 'production') {
+      callback(null, true);
+      return;
+    }
+    
+    // In production, use a specific list
+    const allowedOrigins = [
+      'https://nannotes-frontend.up.railway.app',
+      'https://your-custom-domain.com',
+      /^https:\/\/.*\.railway\.app$/,
+      /^https:\/\/.*\.vercel\.app$/
+    ];
+    
+    // Check if origin is in the allowed list
+    if (!origin || allowedOrigins.some(allowed => 
+        (typeof allowed === 'string' && allowed === origin) || 
+        (allowed instanceof RegExp && allowed.test(origin)))) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
 }));
 
 // Rate limiting
@@ -79,31 +87,117 @@ let userIdCounter = 1;
 // Auth endpoints with mock JWT functionality
 app.post('/api/auth/register', (req, res) => {
   try {
+    console.log('📝 Registration request received with body:', JSON.stringify({
+      ...req.body,
+      password: '[REDACTED]' // Don't log actual password
+    }));
+    
+    console.log('📝 Headers:', JSON.stringify(req.headers));
+    
+    // First, check if we actually received a body
+    if (!req.body) {
+      console.error('❌ No request body received');
+      return res.status(400).json({ 
+        message: 'No request body provided',
+        code: 'MISSING_BODY' 
+      });
+    }
+    
     const { registrationNumber, password, role, year, semester, course, teacherCode, subject } = req.body;
+    
+    // Input validation
+    if (!registrationNumber) {
+      console.log('❌ Registration failed: Missing registration number');
+      return res.status(400).json({ 
+        message: 'Registration number is required',
+        code: 'MISSING_FIELD' 
+      });
+    }
+    
+    if (!password) {
+      console.log('❌ Registration failed: Missing password');
+      return res.status(400).json({ 
+        message: 'Password is required',
+        code: 'MISSING_FIELD' 
+      });
+    }
+    
+    if (role !== 'student' && role !== 'staff') {
+      console.log('❌ Registration failed: Invalid role:', role);
+      return res.status(400).json({ 
+        message: 'Role must be either "student" or "staff"',
+        code: 'INVALID_ROLE' 
+      });
+    }
     
     // Check if user already exists
     const existingUser = users.find(u => u.registrationNumber === registrationNumber);
     if (existingUser) {
-      return res.status(400).json({ error: 'User already exists' });
+      console.log('❌ Registration failed: User already exists');
+      return res.status(400).json({ 
+        message: 'User already exists with this registration number',
+        code: 'USER_EXISTS' 
+      });
     }
     
-    // Create new user
+    // Role-specific validation
+    if (role === 'staff') {
+      if (!subject) {
+        console.log('❌ Registration failed: Missing subject for staff');
+        return res.status(400).json({ 
+          message: 'Subject is required for staff registration',
+          code: 'MISSING_FIELD' 
+        });
+      }
+      
+      // If teacher code is provided, check if it's unique
+      if (teacherCode) {
+        const existingTeacherCode = users.find(u => u.teacherCode === teacherCode);
+        if (existingTeacherCode) {
+          console.log('❌ Registration failed: Teacher code already exists');
+          return res.status(400).json({ 
+            message: 'Teacher code already exists. Please choose a different code.',
+            code: 'TEACHERCODE_EXISTS'
+          });
+        }
+      }
+    }
+    
+    if (role === 'student' && !course) {
+      console.log('❌ Registration failed: Missing course for student');
+      return res.status(400).json({ 
+        message: 'Course is required for student registration',
+        code: 'MISSING_FIELD' 
+      });
+    }
+    
+    // Create new user with auto-generated teacher code for staff
+    let generatedTeacherCode;
+    try {
+      if (role === 'staff') {
+        generatedTeacherCode = teacherCode || `TC${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+        console.log('🔑 Generated teacher code for staff:', generatedTeacherCode);
+      }
+    } catch (codeGenError) {
+      console.error('❌ Error generating teacher code:', codeGenError);
+      generatedTeacherCode = `TC_DEFAULT_${Date.now()}`;
+    }
+      
     const newUser = {
       _id: userIdCounter++,
       registrationNumber,
       password, // In production, hash this!
       role,
-      year: role === 'student' ? year : year,
-      semester: role === 'student' ? semester : semester,
+      year: year,
+      semester: semester,
       course: role === 'student' ? course : undefined,
       subject: role === 'staff' ? subject : undefined,
-      teacherCode: role === 'staff' ? (teacherCode || `TC${Math.random().toString(36).substr(2, 8).toUpperCase()}`) : undefined,
+      teacherCode: role === 'staff' ? generatedTeacherCode : undefined,
       connectedTeachers: role === 'student' ? [] : undefined, // Start with empty array for students
       createdAt: new Date().toISOString()
     };
     
     // Note: Students must manually connect to teachers using teacher codes after registration
-    
     users.push(newUser);
     
     // Create mock JWT token
@@ -112,13 +206,31 @@ app.post('/api/auth/register', (req, res) => {
     // Return user without password
     const { password: _, ...userResponse } = newUser;
     
+    console.log('✅ User registered successfully:', {
+      id: newUser._id,
+      registrationNumber: newUser.registrationNumber,
+      role: newUser.role
+    });
+    
     res.status(201).json({
       message: 'Registration successful',
       user: userResponse,
       token
     });
   } catch (error) {
-    res.status(500).json({ error: 'Registration failed', details: error });
+    console.error('❌ Registration error:', error);
+    // More detailed error information
+    const errorDetails = {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : 'No stack trace',
+      name: error instanceof Error ? error.name : 'Unknown error type'
+    };
+    console.error('❌ Error details:', JSON.stringify(errorDetails));
+    
+    res.status(500).json({ 
+      message: 'Registration failed due to a server error. Please try again.',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 });
 

@@ -1,0 +1,12 @@
+{
+  "method": "POST",
+  "url": "/api/notes",
+  "body": {
+    "title": "s1",
+    "content": "<p><span style=\"background-color: rgb(254, 242, 242); color: rgb(153, 27, 27);\">Cannot connect to the server. Please check if the backend is running and your connection is stable.Cannot connect to the server. Please check if the backend is running and your connection is stable.</span></p>",
+    "tags": [],
+    "shared": false
+  },
+  "userId": "anonymous",
+  "timestamp": "2025-09-06T21:58:29.185Z"
+}

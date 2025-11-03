@@ -151,7 +151,7 @@ const StudentNotesSearch: React.FC = () => {
       {searchResults.length > 0 && (
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-gray-900">Teacher's Shared Notes</h3>
-          {searchResults.map((note) => (
+          {searchResults.map((note: any) => (
             <div key={note._id} className="border border-yellow-200 rounded-lg p-4 bg-yellow-50 hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-2">
                 <h4 className="text-lg font-semibold text-gray-900">{note.title}</h4>
@@ -182,7 +182,7 @@ const StudentNotesSearch: React.FC = () => {
 
               {note.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1 mb-2">
-                  {note.tags.map((tag, index) => (
+                  {note.tags.map((tag: string, index: number) => (
                     <span
                       key={index}
                       className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800"

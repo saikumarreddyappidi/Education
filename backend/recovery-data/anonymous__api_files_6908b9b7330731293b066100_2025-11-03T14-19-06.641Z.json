@@ -1,0 +1,25 @@
+{
+  "method": "PUT",
+  "url": "/api/files/6908b9b7330731293b066100",
+  "body": {
+    "annotations": [
+      {
+        "id": "1762179525621",
+        "type": "drawing",
+        "content": "Hand drawn annotation",
+        "page": 1,
+        "timestamp": "2025-11-03T14:18:45.621Z"
+      },
+      {
+        "id": "1762179544854",
+        "type": "drawing",
+        "content": "Hand drawn annotation",
+        "page": 1,
+        "timestamp": "2025-11-03T14:19:04.854Z"
+      }
+    ],
+    "isShared": true
+  },
+  "userId": "anonymous",
+  "timestamp": "2025-11-03T14:19:06.641Z"
+}

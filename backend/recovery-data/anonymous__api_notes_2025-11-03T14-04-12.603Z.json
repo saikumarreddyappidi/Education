@@ -1,0 +1,14 @@
+{
+  "method": "POST",
+  "url": "/api/notes",
+  "body": {
+    "title": "1",
+    "content": "<p><span style=\"background-color: rgb(24, 24, 24); color: rgb(206, 145, 120);\">StrongP@ss123</span></p>",
+    "tags": [
+      "1"
+    ],
+    "isShared": true
+  },
+  "userId": "anonymous",
+  "timestamp": "2025-11-03T14:04:12.603Z"
+}

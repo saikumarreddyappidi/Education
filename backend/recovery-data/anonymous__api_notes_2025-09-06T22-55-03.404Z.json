@@ -1,0 +1,14 @@
+{
+  "method": "POST",
+  "url": "/api/notes",
+  "body": {
+    "title": "s2",
+    "content": "<p><span style=\"background-color: rgb(254, 242, 242); color: rgb(220, 38, 38);\">Validation failedValidation failedValidation failedValidation failedValidation failed</span></p>",
+    "tags": [
+      "s2"
+    ],
+    "isShared": false
+  },
+  "userId": "anonymous",
+  "timestamp": "2025-09-06T22:55:03.404Z"
+}

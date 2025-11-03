@@ -266,7 +266,7 @@ const DashboardHome: React.FC = () => {
                                 )}
                               </p>
                               <div className="flex flex-wrap gap-1 mt-2">
-                                {note.tags?.slice(0, 3).map((tag) => (
+                                {note.tags?.slice(0, 3).map((tag: string) => (
                                   <span
                                     key={tag}
                                     className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full"
