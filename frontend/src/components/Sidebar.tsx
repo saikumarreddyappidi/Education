@@ -1,7 +1,5 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import { RootState } from '../store';
 
 type SidebarProps = {
   isOpen?: boolean;
@@ -9,8 +7,6 @@ type SidebarProps = {
 };
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => {
-  const { user } = useSelector((state: RootState) => state.auth);
-
   // Base menu items available to all users
   const baseMenuItems = [
     {

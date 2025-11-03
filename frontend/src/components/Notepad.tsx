@@ -7,7 +7,7 @@ import { RootState, AppDispatch } from '../store';
 
 const Notepad: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { notes, isLoading, error, searchResults, currentStaffInfo } = useSelector((state: RootState) => state.notes);
+  const { notes, isLoading, searchResults, currentStaffInfo } = useSelector((state: RootState) => state.notes);
   const { user } = useSelector((state: RootState) => state.auth);
 
   const [selectedNote, setSelectedNote] = useState<any>(null);
@@ -306,9 +306,6 @@ const Notepad: React.FC = () => {
   const sortedNotes = [...(notes || [])].sort((a, b) => {
     return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
   });
-
-  // Filter for different tags
-  const availableTags = Array.from(new Set(sortedNotes.flatMap(note => note.tags || [])));
 
   // Determine which notes to display: search results or user notes
   const displayedNotes = isSearchMode && searchResults && searchResults.length > 0 ? searchResults : sortedNotes;

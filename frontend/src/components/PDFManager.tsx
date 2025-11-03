@@ -1,12 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
 import api from '../services/api';
 
 const PDFManager: React.FC = () => {
   const { user } = useSelector((state: RootState) => state.auth);
-  const navigate = useNavigate();
   const [pdfs, setPdfs] = useState<any[]>([]);
   const [selectedPDF, setSelectedPDF] = useState<any>(null);
   const [isUploading, setIsUploading] = useState(false);
