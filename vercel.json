@@ -14,15 +14,23 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/backend/src/server.ts"
+      "dest": "backend/src/server.ts"
     },
     {
       "src": "/static/(.*)",
-      "dest": "/frontend/build/static/$1"
+      "dest": "frontend/build/static/$1"
+    },
+    {
+      "src": "/manifest.json",
+      "dest": "frontend/build/manifest.json"
+    },
+    {
+      "src": "/favicon.ico",
+      "dest": "frontend/build/favicon.ico"
     },
     {
       "src": "/(.*)",
-      "dest": "/frontend/build/index.html"
+      "dest": "frontend/build/index.html"
     }
   ]
 }
