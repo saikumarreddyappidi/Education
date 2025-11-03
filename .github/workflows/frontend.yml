@@ -29,9 +29,13 @@ jobs:
         cache-dependency-path: './frontend/package-lock.json'
     
     - name: Install dependencies
-      run: npm ci
+      run: |
+        npm cache clean --force
+        rm -rf node_modules package-lock.json
+        npm install
       
     - name: Build
       run: npm run build
       env:
-        CI: false # This prevents treating warnings as errors
+        CI: false # Prevents treating warnings as errors
+        REACT_APP_API_URL: http://localhost:5003
