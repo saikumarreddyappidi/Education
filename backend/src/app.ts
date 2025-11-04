@@ -11,6 +11,7 @@ import fileRoutes from './routes/files';
 import whiteboardRoutes from './routes/whiteboard';
 import teacherRoutes from './routes/teacher';
 import recoveryRoutes from './routes/recovery';
+import forumRoutes from './routes/forumRoutes';
 
 dotenv.config();
 
@@ -39,6 +40,7 @@ app.use('/api/files', fileRoutes);
 app.use('/api/whiteboards', whiteboardRoutes);
 app.use('/api/teachers', teacherRoutes);
 app.use('/api/recovery', recoveryRoutes);
+app.use('/api/forum', forumRoutes);
 
 
 // Error handling middleware

@@ -1,0 +1,14 @@
+{
+  "method": "POST",
+  "url": "/api/forum/questions",
+  "body": {
+    "title": "rr",
+    "content": "http://127.0.0.1:3003/loginhttp://127.0.0.1:3003/login",
+    "tags": [
+      "aa"
+    ],
+    "teacherCode": "TCBXVAWP"
+  },
+  "userId": "anonymous",
+  "timestamp": "2025-11-04T05:12:35.024Z"
+}

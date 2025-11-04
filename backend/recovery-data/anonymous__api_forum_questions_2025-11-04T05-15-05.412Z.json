@@ -1,0 +1,14 @@
+{
+  "method": "POST",
+  "url": "/api/forum/questions",
+  "body": {
+    "title": "sasasasas",
+    "content": "http://127.0.0.1:3003/loginhttp://127.0.0.1:3003/loginhttp://127.0.0.1:3003/loginhttp://127.0.0.1:3003/login",
+    "tags": [
+      "sass"
+    ],
+    "teacherCode": "TCBXVAWP"
+  },
+  "userId": "anonymous",
+  "timestamp": "2025-11-04T05:15:05.412Z"
+}

@@ -17,6 +17,8 @@ import Whiteboard from './components/Whiteboard';
 import PDFManager from './components/PDFManager';
 import StaffSearch from './pages/StaffSearch';
 import FileViewerPage from './pages/FileViewerPage';
+import ForumPage from './pages/Forum/ForumPage';
+import QuestionPage from './pages/Forum/QuestionPage';
 
 const AppRoutes: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -38,6 +40,8 @@ const AppRoutes: React.FC = () => {
   <Route path="notes" element={<Notepad />} />
   <Route path="whiteboard" element={<Whiteboard />} />
   <Route path="pdf" element={<PDFManager />} />
+  <Route path="forum" element={<ForumPage />} />
+  <Route path="forum/:id" element={<QuestionPage />} />
       </Route>
       <Route path="/staff-search" element={<StaffSearch />} />
   <Route path="/file/:id/view" element={<FileViewerPage />} />

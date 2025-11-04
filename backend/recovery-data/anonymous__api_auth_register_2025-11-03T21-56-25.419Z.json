@@ -1,0 +1,16 @@
+{
+  "method": "POST",
+  "url": "/api/auth/register",
+  "body": {
+    "registrationNumber": "6666",
+    "password": "Prabkal@99",
+    "confirmPassword": "Prabkal@99",
+    "role": "staff",
+    "year": "1",
+    "semester": "1",
+    "course": "",
+    "subject": "physics"
+  },
+  "userId": "anonymous",
+  "timestamp": "2025-11-03T21:56:25.419Z"
+}

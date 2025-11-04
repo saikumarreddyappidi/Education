@@ -111,9 +111,10 @@ router.get('/connected', auth, requireRole('student'), async (req: any, res: any
 });
 
 // Search for teachers by teacher code
-router.get('/search/:teacherCode', auth, requireRole('student'), async (req: any, res: any) => {
+router.get('/search/:identifier', auth, requireRole('student'), async (req: any, res: any) => {
   try {
-    const { teacherCode } = req.params;
+    const rawIdentifier = req.params.identifier;
+    const identifier = typeof rawIdentifier === 'string' ? rawIdentifier.trim() : '';
     const userId = req.user.id;
     const user = await User.findById(userId);
     
@@ -121,17 +122,29 @@ router.get('/search/:teacherCode', auth, requireRole('student'), async (req: any
       return res.status(403).json({ message: 'Only students can search for teachers' });
     }
     
-    const teacher = await User.findOne({ 
-      teacherCode, 
-      role: 'staff' 
+    if (!identifier) {
+      return res.status(400).json({ message: 'Please provide a teacher ID or code to search' });
+    }
+
+  const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const caseInsensitiveExact = new RegExp(`^${escapeRegex(identifier)}$`, 'i');
+
+    const teacher = await User.findOne({
+      role: 'staff',
+      $or: [
+        { teacherCode: caseInsensitiveExact },
+        { registrationNumber: caseInsensitiveExact }
+      ]
     }).select('registrationNumber teacherCode subject');
     
     if (!teacher) {
-      return res.status(404).json({ message: 'Teacher not found with this code' });
+      return res.status(404).json({ message: 'Teacher not found with this ID or code' });
     }
     
     // Check if already connected
-    const isConnected = user.teacherCodes && user.teacherCodes.includes(teacherCode);
+    const isConnected = user.teacherCodes && teacher.teacherCode
+      ? user.teacherCodes.includes(teacher.teacherCode)
+      : false;
     
     res.json({
       _id: teacher._id,

@@ -1,0 +1,14 @@
+{
+  "method": "POST",
+  "url": "/api/notes",
+  "body": {
+    "title": "sai",
+    "content": "<p>http://127.0.0.1:3001/http://127.0.0.1:3001/http://127.0.0.1:3001/</p>",
+    "tags": [
+      "sai"
+    ],
+    "isShared": true
+  },
+  "userId": "anonymous",
+  "timestamp": "2025-11-04T04:45:27.142Z"
+}

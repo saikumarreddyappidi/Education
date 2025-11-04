@@ -1,0 +1,14 @@
+{
+  "method": "POST",
+  "url": "/api/notes",
+  "body": {
+    "title": "s",
+    "content": "<p><a href=\"http://127.0.0.1:3003/login\" rel=\"noopener noreferrer\" target=\"_blank\">NANNOTES - Educational Productivity PlatformNANNOTES - Educational Productivity Platform</a></p>",
+    "tags": [
+      "s"
+    ],
+    "isShared": true
+  },
+  "userId": "anonymous",
+  "timestamp": "2025-11-04T05:11:03.687Z"
+}

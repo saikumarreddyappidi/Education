@@ -1,0 +1,14 @@
+{
+  "method": "POST",
+  "url": "/api/forum/questions",
+  "body": {
+    "title": "sai",
+    "content": "Assign to a Teacher\n\n2222\nSearch Teacher\nUnable to find a teacher with that ID.\n\nSubmit Question",
+    "tags": [
+      "sa"
+    ],
+    "teacherCode": "TCIVFCAX"
+  },
+  "userId": "anonymous",
+  "timestamp": "2025-11-04T05:04:33.669Z"
+}

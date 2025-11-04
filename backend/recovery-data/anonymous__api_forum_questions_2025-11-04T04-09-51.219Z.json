@@ -1,0 +1,13 @@
+{
+  "method": "POST",
+  "url": "/api/forum/questions",
+  "body": {
+    "title": "hi",
+    "content": "hii",
+    "tags": [
+      "fghfg"
+    ]
+  },
+  "userId": "anonymous",
+  "timestamp": "2025-11-04T04:09:51.219Z"
+}

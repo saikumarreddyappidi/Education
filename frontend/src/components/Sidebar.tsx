@@ -49,6 +49,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => {
         </svg>
       ),
     },
+    {
+      name: 'Forum',
+      path: '/dashboard/forum',
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M21 12a9 9 0 11-6.219-8.56" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L21 20m-4.343-3.343A8.971 8.971 0 0112 18a8.971 8.971 0 01-4.657-1.343L3 20l1.343-4.657A8.971 8.971 0 013 12" />
+        </svg>
+      ),
+    },
   ];
 
   // Determine menu items based on user role
