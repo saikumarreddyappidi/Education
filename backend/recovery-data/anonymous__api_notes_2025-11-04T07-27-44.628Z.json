@@ -1,0 +1,12 @@
+{
+  "method": "POST",
+  "url": "/api/notes",
+  "body": {
+    "title": "ccc",
+    "content": "<p>whatwhatwhatwhatwhatwhat</p>",
+    "tags": [],
+    "isShared": true
+  },
+  "userId": "anonymous",
+  "timestamp": "2025-11-04T07:27:44.628Z"
+}

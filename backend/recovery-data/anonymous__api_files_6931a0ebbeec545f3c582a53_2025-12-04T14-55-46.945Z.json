@@ -1,0 +1,10 @@
+{
+  "method": "PUT",
+  "url": "/api/files/6931a0ebbeec545f3c582a53",
+  "body": {
+    "annotations": [],
+    "isShared": true
+  },
+  "userId": "anonymous",
+  "timestamp": "2025-12-04T14:55:46.945Z"
+}

@@ -1,0 +1,14 @@
+{
+  "method": "POST",
+  "url": "/api/forum/questions",
+  "body": {
+    "title": "s3",
+    "content": "whatwhatwhat",
+    "tags": [
+      "what"
+    ],
+    "teacherCode": "TCCWCJXY"
+  },
+  "userId": "anonymous",
+  "timestamp": "2025-11-04T06:22:33.764Z"
+}
